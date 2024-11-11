@@ -9,6 +9,7 @@ import {
 import { PublicKey } from "@solana/web3.js";
 import { Coffee } from "lucide-react";
 import { motion } from "framer-motion";
+import { web3 } from "@coral-xyz/anchor";
 
 interface Campaign {
   admin: PublicKey;
@@ -59,7 +60,7 @@ export default function CampaignTable({
               <TableCell className="text-right">
                 <span className="inline-flex items-center bg-gradient-to-r from-yellow-300 to-yellow-500 text-purple-900 rounded-full px-3 py-1 font-bold">
                   <Coffee className="h-4 w-4 mr-2 text-purple-700" />
-                  {Math.floor(campaign.amountDonated / 1e9)}
+                  {campaign.amountDonated / web3.LAMPORTS_PER_SOL}
                 </span>
               </TableCell>
             </motion.tr>

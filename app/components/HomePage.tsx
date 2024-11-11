@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { Coffee, Heart, RefreshCcw } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { campaign, getProgram } from "../config/setup";
+import { getProgram } from "../config/setup";
 import CampaignTable from "./CampaignTable";
 
 interface Campaign {
@@ -42,15 +42,15 @@ export default function Home() {
       const campaignAccounts = await connection.getProgramAccounts(
         program.programId
       );
-      const res = await program.methods
-        .donate(new BN(1 * LAMPORTS_PER_SOL))
+      await program.methods
+        .donate(new BN(0.1 * LAMPORTS_PER_SOL))
         .accounts({
           campaign: campaignAccounts[0].pubkey,
           user: anchorWallet.publicKey,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
-      console.log(res);
+      getAllCampaigns();
     } catch (e) {
       console.log("Error on donate", e);
     }
@@ -72,11 +72,15 @@ export default function Home() {
           const campaignData = await program.account.campaign.fetch(
             account.pubkey
           );
+          console.log(
+            account.pubkey.toString(),
+            account.account.owner.toString()
+          );
           return {
             admin: campaignData.admin,
             name: campaignData.name,
             description: campaignData.description,
-            amountDonated: campaignData.amountDonated,
+            amountDonated: campaignData.amountDonated.toNumber(),
           };
         })
       );
