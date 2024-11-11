@@ -50,7 +50,10 @@ export default function CampaignTable({
               <TableCell className="text-pink-600">
                 {campaign.description}
               </TableCell>
-              <TableCell className="font-mono text-xs text-gray-500">
+              <TableCell
+                title={campaign.admin.toString()}
+                className="font-mono text-xs text-gray-500"
+              >
                 {campaign.admin.toString().slice(0, 8)}...
               </TableCell>
               <TableCell className="text-right">

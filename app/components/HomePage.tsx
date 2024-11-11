@@ -1,42 +1,69 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useConnection } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
-import { Coffee, RefreshCcw, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
-import { program } from "../config/setup";
-import CampaignTable from "./CampaignTable";
-import Image from "next/image";
+import useIsMounted from "@/hooks/useIsMounted";
+import { BN } from "@coral-xyz/anchor";
+import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+} from "@solana/web3.js";
 import { motion } from "framer-motion";
+import { Coffee, Heart, RefreshCcw } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { campaign, getProgram } from "../config/setup";
+import CampaignTable from "./CampaignTable";
 
 interface Campaign {
   admin: PublicKey;
   name: string;
   description: string;
-  amountDonated: number;
+  amountDonated: any;
 }
 
 export default function Home() {
   const { connection } = useConnection();
+  const anchorWallet = useAnchorWallet();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isMounted = useIsMounted();
 
-  const createNewFunding = async () => {
-    setIsLoading(true);
+  const donateCoffee = async () => {
+    if (!anchorWallet) return;
     try {
-      await program.methods.create("Buy me a Coffee", "Buy me a coffee").rpc();
-      await getAllCampaigns();
-    } catch (error) {
-      console.error("Error creating campaign:", error);
-    } finally {
-      setIsLoading(false);
+      const program = getProgram({
+        ...anchorWallet,
+        payer: new Keypair(),
+      });
+      const campaignAccounts = await connection.getProgramAccounts(
+        program.programId
+      );
+      const res = await program.methods
+        .donate(new BN(1 * LAMPORTS_PER_SOL))
+        .accounts({
+          campaign: campaignAccounts[0].pubkey,
+          user: anchorWallet.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      console.log(res);
+    } catch (e) {
+      console.log("Error on donate", e);
     }
   };
 
   const getAllCampaigns = async () => {
+    if (!anchorWallet) return;
     setIsLoading(true);
     try {
+      const program = getProgram({
+        ...anchorWallet,
+        payer: new Keypair(),
+      });
       const campaignAccounts = await connection.getProgramAccounts(
         program.programId
       );
@@ -49,7 +76,7 @@ export default function Home() {
             admin: campaignData.admin,
             name: campaignData.name,
             description: campaignData.description,
-            amountDonated: campaignData.amountDonated.toNumber(),
+            amountDonated: campaignData.amountDonated,
           };
         })
       );
@@ -62,12 +89,19 @@ export default function Home() {
   };
 
   useEffect(() => {
-    getAllCampaigns();
-  }, []);
+    if (anchorWallet) {
+      getAllCampaigns();
+    }
+  }, [anchorWallet]);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500">
       <div className="container mx-auto px-4 py-12">
+        {isMounted && (
+          <div className="flex justify-end">
+            <WalletMultiButton />
+          </div>
+        )}
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -89,12 +123,12 @@ export default function Home() {
           </p>
           <div className="flex space-x-4">
             <Button
-              onClick={createNewFunding}
+              onClick={donateCoffee}
               disabled={isLoading}
               className="bg-yellow-400 hover:bg-yellow-500 text-purple-900 font-bold py-3 px-6 rounded-full transform hover:scale-105 transition duration-200"
             >
               <Coffee className="mr-2 h-5 w-5" />
-              {isLoading ? "Brewing..." : "Start Coffee Magic"}
+              {isLoading ? "Brewing..." : "Donate coffee !!!!"}
             </Button>
             <Button
               onClick={getAllCampaigns}
