@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <AppWalletProvider>
           {children}
-          <Toaster />
+          <Toaster position="top-right" />
         </AppWalletProvider>
       </body>
     </html>

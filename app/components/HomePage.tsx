@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import useIsMounted from "@/hooks/useIsMounted";
 import { Donator } from "@/types";
 import { BN } from "@coral-xyz/anchor";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
@@ -77,19 +78,15 @@ export default function Home() {
   };
 
   const getAllCampaigns = async () => {
-    if (!anchorWallet) return;
     setIsLoading(true);
+    const program = getProgram();
     try {
-      const program = getProgram({
-        ...anchorWallet,
-        payer: new Keypair(),
-      });
       const campaignAccounts = await connection.getProgramAccounts(
         program.programId
       );
       if (campaignAccounts.length > 0) {
         const campaignData = await program.account.campaign.fetch(
-          campaignAccounts[0].pubkey
+          process.env.NEXT_PUBLIC_PROGRAM_ADDRESS
         );
         setCampaign({
           admin: campaignData.admin,
@@ -101,15 +98,14 @@ export default function Home() {
       }
     } catch (e) {
       toast.error("Error fetching campaigns");
+      console.log(e);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (anchorWallet) {
-      getAllCampaigns();
-    }
+    getAllCampaigns();
   }, [anchorWallet]);
 
   return (
@@ -151,6 +147,7 @@ export default function Home() {
                 src="/logo.png"
                 fill
                 alt="3D Coffee Cup"
+                sizes="100%"
                 className="w-full h-full object-contain drop-shadow-2xl"
               />
             </motion.div>
